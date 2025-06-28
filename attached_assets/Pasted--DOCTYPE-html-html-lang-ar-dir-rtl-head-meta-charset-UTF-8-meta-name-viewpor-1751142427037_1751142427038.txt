@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eFootball Mobile 2025 - محسن</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+            min-height: 100vh;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #3b82f6;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed #3b82f6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .drag-drop-area:hover, .drag-drop-area.dragover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #1d4ed8;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #10b981, #059669);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-center shadow-2xl">
+        <h1 class="text-4xl font-bold mb-2">
+            <i class="fas fa-futbol"></i> eFootball Mobile 2025
+        </h1>
+        <p class="text-xl opacity-90">تطوير اللاعبين الأسطوريين</p>
+        <a href="https://linktr.ee/Drefootball26" target="_blank" 
+           class="inline-block mt-4 px-6 py-3 glass-effect rounded-full text-white font-bold hover:bg-white hover:bg-opacity-20 transition-all duration-300">
+            <i class="fas fa-phone"></i> تواصل معنا
+        </a>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Search Section -->
+        <div class="text-center mb-8">
+            <div class="relative max-w-md mx-auto">
+                <input type="text" id="searchBox" 
+                       class="w-full px-6 py-4 rounded-full glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="🔍 ابحث عن لاعب...">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-300"></i>
+            </div>
+        </div>
+
+        <!-- Admin Section -->
+        <div class="text-center mb-8">
+            <button onclick="showAdminLogin()" 
+                    class="px-8 py-3 bg-gradient-to-r from-red-500 to-red-700 rounded-full font-bold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-cog"></i> لوحة التحكم
+            </button>
+        </div>
+
+        <!-- Players Counter -->
+        <div class="text-center mb-6">
+            <div class="inline-block glass-effect px-6 py-3 rounded-full">
+                <span class="text-lg font-bold">عدد اللاعبين: <span id="playersCount" class="text-blue-400">0</span></span>
+            </div>
+        </div>
+
+        <!-- Players Grid -->
+        <div id="playersGrid" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+
+        <!-- No Players Message -->
+        <div id="noPlayers" class="text-center py-16" style="display: none;">
+            <i class="fas fa-users text-6xl text-gray-500 mb-4"></i>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">لا توجد لاعبين حالياً</h3>
+            <p class="text-gray-500">قم بإضافة لاعبين من لوحة التحكم</p>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="modal" id="adminLoginModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-blue-400">
+                    <i class="fas fa-lock"></i> تسجيل دخول المدير
+                </h3>
+                <button onclick="closeModal('adminLoginModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-bold mb-2">كلمة المرور:</label>
+                <input type="password" id="adminPassword" 
+                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="أدخل كلمة المرور">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="checkAdminPassword()" 
+                        class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    دخول
+                </button>
+                <button onclick="closeModal('adminLoginModal')" 
+                        class="flex-1 px-6 py-3 glass-effect rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div class="modal" id="adminPanelModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-lg w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-blue-400">
+                    <i class="fas fa-cogs"></i> لوحة تحكم المدير
+                </h3>
+                <button onclick="closeModal('adminPanelModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid gap-4">
+                <button onclick="showAddPlayerForm()" 
+                        class="w-full px-6 py-4 bg-gradient-to-r from-green-500 to-green-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-plus"></i> إضافة لاعب جديد
+                </button>
+                <button onclick="showDeletePlayerForm()" 
+                        class="w-full px-6 py-4 bg-gradient-to-r from-red-500 to-red-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-trash"></i> حذف لاعب
+                </button>
+                <button onclick="exportData()" 
+                        class="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-download"></i> تصدير البيانات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Player Modal -->
+    <div class="modal" id="addPlayerModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-green-400">
+                    <i class="fas fa-plus"></i> إضافة لاعب جديد
+                </h3>
+                <button onclick="closeModal('addPlayerModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Player Info Section -->
+                <div>
+                    <h4 class="text-lg font-bold mb-4 text-blue-400">
+                        <i class="fas fa-user"></i> معلومات اللاعب
+                    </h4>
+                    
+                    <!-- Player Image Upload -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2">صورة اللاعب:</label>
+                        <div class="drag-drop-area" onclick="document.getElementById('playerImageInput').click()">
+                            <input type="file" id="playerImageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                            <div id="imagePreview" class="mb-3">
+                                <i class="fas fa-camera text-4xl text-blue-400 mb-2"></i>
+                                <p>اضغط لرفع صورة أو اسحب الصورة هنا</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">اسم اللاعب:</label>
+                            <input type="text" id="playerName" 
+                                   class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="اسم اللاعب">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-2">التقييم العام:</label>
+                            <input type="number" id="playerRating" min="50" max="99"
+                                   class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="التقييم">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-2">المركز:</label>
+                            <select id="playerPosition" 
+                                    class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">اختر المركز</option>
+                                <option value="CF">CF - مهاجم وسط</option>
+                                <option value="LWF">LWF - جناح أيسر</option>
+                                <option value="RWF">RWF - جناح أيمن</option>
+                                <option value="SS">SS - صانع ألعاب</option>
+                                <option value="AMF">AMF - وسط مهاجم</option>
+                                <option value="CMF">CMF - وسط ملعب</option>
+                                <option value="DMF">DMF - وسط دفاعي</option>
+                                <option value="LB">LB - ظهير أيسر</option>
+                                <option value="RB">RB - ظهير أيمن</option>
+                                <option value="CB">CB - مدافع وسط</option>
+                                <option value="GK">GK - حارس مرمى</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-2">الفريق:</label>
+                            <input type="text" id="playerTeam" 
+                                   class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="اسم الفريق">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-2">الجنسية:</label>
+                            <input type="text" id="playerNationality" 
+                                   class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="الجنسية">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Section -->
+                <div>
+                    <h4 class="text-lg font-bold mb-4 text-blue-400">
+                        <i class="fas fa-chart-bar"></i> إحصائيات اللاعب
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-bullseye"></i> التسديد
+                            </label>
+                            <input type="number" id="shooting" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-futbol"></i> التمرير
+                            </label>
+                            <input type="number" id="passing" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-running"></i> المراوغة
+                            </label>
+                            <input type="number" id="dribbling" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-bolt"></i> المهارة
+                            </label>
+                            <input type="number" id="dexterity" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-dumbbell"></i> قوة الجسم السفلي
+                            </label>
+                            <input type="number" id="lowerBodyStrength" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-dove"></i> القوة الهوائية
+                            </label>
+                            <input type="number" id="aerialStrength" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-shield-alt"></i> الدفاع
+                            </label>
+                            <input type="number" id="defending" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-hand-paper"></i> حراسة 1
+                            </label>
+                            <input type="number" id="gk1" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-hand-paper"></i> حراسة 2
+                            </label>
+                            <input type="number" id="gk2" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        
+                        <div class="glass-effect p-3 rounded-lg">
+                            <label class="block text-xs font-bold mb-1">
+                                <i class="fas fa-hand-paper"></i> حراسة 3
+                            </label>
+                            <input type="number" id="gk3" min="40" max="99" value="70"
+                                   class="w-full px-2 py-1 rounded glass-effect text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="addPlayer()" 
+                        class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-save"></i> إضافة اللاعب
+                </button>
+                <button onclick="closeModal('addPlayerModal')" 
+                        class="px-6 py-3 glass-effect rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Player Modal -->
+    <div class="modal" id="deletePlayerModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-red-400">
+                    <i class="fas fa-trash"></i> حذف لاعب
+                </h3>
+                <button onclick="closeModal('deletePlayerModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-bold mb-2">اختر اللاعب المراد حذفه:</label>
+                <select id="deletePlayerSelect" 
+                        class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="">اختر لاعب...</option>
+                </select>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="deletePlayer()" 
+                        class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    حذف
+                </button>
+                <button onclick="closeModal('deletePlayerModal')" 
+                        class="flex-1 px-6 py-3 glass-effect rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // البيانات الافتراضية
+        let players = [];
+        const adminPassword = "0113023404";
+        let nextPlayerId = 1;
+        let currentPlayerImage = null;
+
+        // تحميل البيانات من localStorage عند بدء التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            displayPlayers();
+            setupSearch();
+            setupDragDrop();
+        });
+
+        // وظائف localStorage
+        function saveData() {
+            try {
+                localStorage.setItem('efootball_players', JSON.stringify(players));
+                localStorage.setItem('efootball_nextId', nextPlayerId.toString());
+                showNotification('تم حفظ البيانات بنجاح', 'success');
+            } catch (error) {
+                showNotification('خطأ في حفظ البيانات', 'error');
+            }
+        }
+
+        function loadData() {
+            try {
+                const savedPlayers = localStorage.getItem('efootball_players');
+                const savedNextId = localStorage.getItem('efootball_nextId');
+                
+                if (savedPlayers) {
+                    players = JSON.parse(savedPlayers);
+                }
+                
+                if (savedNextId) {
+                    nextPlayerId = parseInt(savedNextId);
+                }
+
+                // إضافة بيانات افتراضية إذا لم توجد بيانات
+                if (players.length === 0) {
+                    addDefaultPlayers();
+                }
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                addDefaultPlayers();
+            }
+        }
+
+        function addDefaultPlayers() {
+            players = [
+                {
+                    id: 1,
+                    name: "كريستيانو رونالدو",
+                    rating: 94,
+                    position: "LWF",
+                    team: "Al Nassr",
+                    nationality: "البرتغال",
+                    image: null,
+                    stats: {
+                        shooting: 95,
+                        passing: 82,
+                        dribbling: 89,
+                        dexterity: 91,
+                        lowerBodyStrength: 95,
+                        aerialStrength: 98,
+                        defending: 35,
+                        gk1: 15,
+                        gk2: 15,
+                        gk3: 15
+                    }
+                },
+                {
+                    id: 2,
+                    name: "ليونيل ميسي",
+                    rating: 93,
+                    position: "RWF",
+                    team: "Inter Miami",
+                    nationality: "الأرجنتين",
+                    image: null,
+                    stats: {
+                        shooting: 92,
+                        passing: 95,
+                        dribbling: 97,
+                        dexterity: 96,
+                        lowerBodyStrength: 78,
+                        aerialStrength: 68,
+                        defending: 40,
+                        gk1: 15,
+                        gk2: 15,
+                        gk3: 15
+                    }
+                },
+                {
+                    id: 3,
+                    name: "كيليان مبابي",
+                    rating: 91,
+                    position: "CF",
+                    team: "Real Madrid",
+                    nationality: "فرنسا",
+                    image: null,
+                    stats: {
+                        shooting: 88,
+                        passing: 80,
+                        dribbling: 92,
+                        dexterity: 94,
+                        lowerBodyStrength: 82,
+                        aerialStrength: 78,
+                        defending: 38,
+                        gk1: 15,
+                        gk2: 15,
+                        gk3: 15
+                    }
+                }
+            ];
+            nextPlayerId = 4;
+            saveData();
+        }
+
+        // عرض الإشعارات
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = notification ${type};
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // عرض اللاعبين
+        function displayPlayers(playersToShow = players) {
+            const grid = document.getElementById('playersGrid');
+            const noPlayers = document.getElementById('noPlayers');
+            const playersCount = document.getElementById('playersCount');
+            
+            playersCount.textContent = playersToShow.length;
+            
+            if (playersToShow.length === 0) {
+                grid.innerHTML = '';
+                noPlayers.style.display = 'block';
+                return;
+            }
+            
+            noPlayers.style.display = 'none';
+            
+            grid.innerHTML = playersToShow.map(player => `
+                <div class="player-card glass-effect rounded-2xl p-6 hover:shadow-2xl transition-all duration-300">
+                    <div class="text-center mb-4">
+                        ${player.image ? 
+                            <img src="${player.image}" alt="${player.name}" class="player-image mx-auto mb-3"> :
+                            `<div class="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-2xl text-white"></i>
+                            </div>`
+                        }
+                        <h3 class="text-xl font-bold text-white mb-2">${player.name}</h3>
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="text-3xl font-bold text-yellow-400">${player.rating}</div>
+                            <div class="text-right">
+                                <div class="inline-block px-3 py-1 bg-blue-500 bg-opacity-30 rounded-full text-sm border border-blue-500">
+                                    ${player.position}
+                                </div>
+                                <div class="text-sm text-gray-300 mt-1">${player.team}</div>
+                                <div class="text-sm text-gray-400">${player.nationality}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="flex justify-between items-center p-2 glass-effect rounded-lg">
+                            <span><i class="fas fa-bullseye text-red-400"></i> التسديد</span>
+                            <span class="font-bold text-blue-400">${player.stats.shooting}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 glass-effect rounded-lg">
+                            <span><i class="fas fa-futbol text-green-400"></i> التمرير</span>
+                            <span class="font-bold text-blue-400">${player.stats.passing}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 glass-effect rounded-lg">
+                            <span><i class="fas fa-running text-yellow-400"></i> المراوغة</span>
+                            <span class="font-bold text-blue-400">${player.stats.dribbling}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 glass-effect rounded-lg">
+                            <span><i class="fas fa-bolt text-purple-400"></i> المهارة</span>
+                            <span class="font-bold text-blue-400">${player.stats.dexterity}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 glass-effect rounded-lg">
+                            <span><i class="fas fa-dumbbell text-orange-400"></i> قوة الجسم</span>
+                            <span class="font-bold text-blue-400">${player.stats.lowerBodyStrength}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 glass-effect rounded-lg">
+                            <span><i class="fas fa-dove text-cyan-400"></i> قوة هوائية</span>
+                            <span class="font-bold text-blue-400">${player.stats.aerialStrength}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <button onclick="deletePlayerById(${player.id})" 
+                                class="px-4 py-2 bg-red-500 bg-opacity-20 text-red-400 rounded-lg hover:bg-opacity-30 transition-all duration-300 border border-red-500">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // البحث
+        function setupSearch() {
+            const searchBox = document.getElementById('searchBox');
+            searchBox.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                if (searchTerm === '') {
+                    displayPlayers();
+                    return;
+                }
+                
+                const filteredPlayers = players.filter(player => 
+                    player.name.toLowerCase().includes(searchTerm) ||
+                    player.team.toLowerCase().includes(searchTerm) ||
+                    player.position.toLowerCase().includes(searchTerm) ||
+                    player.nationality.toLowerCase().includes(searchTerm)
+                );
+                
+                displayPlayers(filteredPlayers);
+            });
+        }
+
+        // وظائف النوافذ المنبثقة
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            
+            // إعادة تعيين النموذج إذا كان نموذج إضافة لاعب
+            if (modalId === 'addPlayerModal') {
+                resetAddPlayerForm();
+            }
+        }
+
+        function showAdminLogin() {
+            showModal('adminLoginModal');
+        }
+
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === adminPassword) {
+                closeModal('adminLoginModal');
+                showModal('adminPanelModal');
+                document.getElementById('adminPassword').value = '';
+            } else {
+                showNotification('كلمة مرور خاطئة', 'error');
+            }
+        }
+
+        function showAddPlayerForm() {
+            closeModal('adminPanelModal');
+            showModal('addPlayerModal');
+        }
+
+        function showDeletePlayerForm() {
+            const select = document.getElementById('deletePlayerSelect');
+            select.innerHTML = '<option value="">اختر لاعب...</option>';
+            
+            players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = player.name;
+                select.appendChild(option);
+            });
+            
+            closeModal('adminPanelModal');
+            showModal('deletePlayerModal');
+        }
+
+        // رفع الصور
+        function setupDragDrop() {
+            const dropArea = document.querySelector('.drag-drop-area');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight(e) {
+                dropArea.classList.add('dragover');
+            }
+
+            function unhighlight(e) {
+                dropArea.classList.remove('dragover');
+            }
+
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            handleImageUpload({ target: { files: [file] } });
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentPlayerImage = e.target.result;
+                    
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = `
+                        <img src="${currentPlayerImage}" alt="صورة اللاعب" class="w-24 h-24 rounded-full mx-auto object-cover border-2 border-blue-400">
+                        <p class="mt-2 text-green-400">تم رفع الصورة بنجاح</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // إضافة لاعب
+        function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            const rating = parseInt(document.getElementById('playerRating').value);
+            const position = document.getElementById('playerPosition').value;
+            const team = document.getElementById('playerTeam').value.trim();
+            const nationality = document.getElementById('playerNationality').value.trim();
+
+            // التحقق من صحة البيانات
+            if (!name || !rating || !position || !team || !nationality) {
+                showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+
+            if (rating < 50 || rating > 99) {
+                showNotification('التقييم يجب أن يكون بين 50 و 99', 'error');
+                return;
+            }
+
+            // التحقق من عدم وجود لاعب بنفس الاسم
+            if (players.some(player => player.name.toLowerCase() === name.toLowerCase())) {
+                showNotification('يوجد لاعب بهذا الاسم مسبقاً', 'error');
+                return;
+            }
+
+            const newPlayer = {
+                id: nextPlayerId++,
+                name: name,
+                rating: rating,
+                position: position,
+                team: team,
+                nationality: nationality,
+                image: currentPlayerImage,
+                stats: {
+                    shooting: parseInt(document.getElementById('shooting').value) || 70,
+                    passing: parseInt(document.getElementById('passing').value) || 70,
+                    dribbling: parseInt(document.getElementById('dribbling').value) || 70,
+                    dexterity: parseInt(document.getElementById('dexterity').value) || 70,
+                    lowerBodyStrength: parseInt(document.getElementById('lowerBodyStrength').value) || 70,
+                    aerialStrength: parseInt(document.getElementById('aerialStrength').value) || 70,
+                    defending: parseInt(document.getElementById('defending').value) || 70,
+                    gk1: parseInt(document.getElementById('gk1').value) || 70,
+                    gk2: parseInt(document.getElementById('gk2').value) || 70,
+                    gk3: parseInt(document.getElementById('gk3').value) || 70
+                }
+            };
+
+            players.push(newPlayer);
+            saveData();
+            displayPlayers();
+            closeModal('addPlayerModal');
+            showNotification(تم إضافة اللاعب ${name} بنجاح, 'success');
+        }
+
+        // إعادة تعيين نموذج إضافة لاعب
+        function resetAddPlayerForm() {
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerRating').value = '';
+            document.getElementById('playerPosition').value = '';
+            document.getElementById('playerTeam').value = '';
+            document.getElementById('playerNationality').value = '';
+            
+            // إعادة تعيين الإحصائيات
+            ['shooting', 'passing', 'dribbling', 'dexterity', 'lowerBodyStrength', 'aerialStrength', 'defending', 'gk1', 'gk2', 'gk3'].forEach(stat => {
+                document.getElementById(stat).value = 70;
+            });
+            
+            // إعادة تعيين الصورة
+            currentPlayerImage = null;
+            document.getElementById('imagePreview').innerHTML = `
+                <i class="fas fa-camera text-4xl text-blue-400 mb-2"></i>
+                <p>اضغط لرفع صورة أو اسحب الصورة هنا</p>
+            `;
+            document.getElementById('playerImageInput').value = '';
+        }
+
+        // حذف لاعب من الجدول
+        function deletePlayerById(playerId) {
+            if (confirm('هل أنت متأكد من حذف هذا اللاعب؟')) {
+                players = players.filter(player => player.id !== playerId);
+                saveData();
+                displayPlayers();
+                showNotification('تم حذف اللاعب بنجاح', 'success');
+            }
+        }
+
+        // حذف لاعب من النموذج
+        function deletePlayer() {
+            const playerId = parseInt(document.getElementById('deletePlayerSelect').value);
+            
+            if (!playerId) {
+                showNotification('يرجى اختيار لاعب للحذف', 'error');
+                return;
+            }
+
+            const player = players.find(p => p.id === playerId);
+            if (!player) {
+                showNotification('اللاعب غير موجود', 'error');
+                return;
+            }
+
+            if (confirm(هل أنت متأكد من حذف اللاعب ${player.name}؟)) {
+                players = players.filter(p => p.id !== playerId);
+                saveData();
+                displayPlayers();
+                closeModal('deletePlayerModal');
+                showNotification(تم حذف اللاعب ${player.name} بنجاح, 'success');
+            }
+        }
+
+        // تصدير البيانات
+        function exportData() {
+            try {
+                const dataStr = JSON.stringify(players, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = efootball_players_${new Date().toISOString().split('T')[0]}.json;
+                link.click();
+                
+                showNotification('تم تصدير البيانات بنجاح', 'success');
+            } catch (error) {
+                showNotification('خطأ في تصدير البيانات', 'error');
+            }
+        }
+
+        // إغلاق النوافذ عند الضغط خارجها
+        document.addEventListener('click', function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
+
+        // اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const activeModal = document.querySelector('.modal.show');
+                if (activeModal) {
+                    activeModal.classList.remove('show');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
