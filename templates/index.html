@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eFootball Mobile 2025 - محسن</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+            min-height: 100vh;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #3b82f6;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed #3b82f6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .drag-drop-area:hover, .drag-drop-area.dragover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #1d4ed8;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #10b981, #059669);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-center shadow-2xl">
+        <h1 class="text-4xl font-bold mb-2">
+            <i class="fas fa-futbol"></i> eFootball Mobile 2025
+        </h1>
+        <p class="text-xl opacity-90">تطوير اللاعبين الأسطوريين</p>
+        <a href="https://linktr.ee/Drefootball26" target="_blank" 
+           class="inline-block mt-4 px-6 py-3 glass-effect rounded-full text-white font-bold hover:bg-white hover:bg-opacity-20 transition-all duration-300">
+            <i class="fas fa-phone"></i> تواصل معنا
+        </a>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Search Section -->
+        <div class="text-center mb-8">
+            <div class="relative max-w-md mx-auto">
+                <input type="text" id="searchBox" 
+                       class="w-full px-6 py-4 rounded-full glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="🔍 ابحث عن لاعب...">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-300"></i>
+            </div>
+        </div>
+
+        <!-- Admin Section -->
+        <div class="text-center mb-8">
+            <button onclick="showAdminLogin()" 
+                    class="px-8 py-3 bg-gradient-to-r from-red-500 to-red-700 rounded-full font-bold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-cog"></i> لوحة التحكم
+            </button>
+        </div>
+
+        <!-- Players Counter -->
+        <div class="text-center mb-6">
+            <div class="inline-block glass-effect px-6 py-3 rounded-full">
+                <span class="text-lg font-bold">عدد اللاعبين: <span id="playersCount" class="text-blue-400">{{ players|length }}</span></span>
+            </div>
+        </div>
+
+        <!-- Players Grid -->
+        <div id="playersGrid" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {% for player in players %}
+            <div class="player-card glass-effect rounded-2xl p-6 cursor-pointer" data-player-id="{{ player.id }}" onclick="showPlayerDetails({{ player.id }})">
+                <div class="flex items-center mb-4">
+                    {% if player.image_path %}
+                    <img src="{{ url_for('static', filename=player.image_path) }}" alt="{{ player.name }}" class="player-image">
+                    {% else %}
+                    <div class="player-image bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                        <i class="fas fa-user text-white text-2xl"></i>
+                    </div>
+                    {% endif %}
+                    <div class="mr-4">
+                        <h3 class="text-xl font-bold text-blue-400">{{ player.name }}</h3>
+                        <p class="text-gray-300">{{ player.team }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center mb-3">
+                    <span class="px-3 py-1 bg-gradient-to-r from-green-500 to-green-700 rounded-full text-sm font-bold">
+                        {{ player.rating }}
+                    </span>
+                    <span class="px-3 py-1 glass-effect rounded-full text-sm">
+                        {{ player.position }}
+                    </span>
+                </div>
+                
+                <div class="text-sm text-gray-300">
+                    <p><i class="fas fa-flag"></i> {{ player.nationality }}</p>
+                    <p><i class="fas fa-birthday-cake"></i> {{ player.age }} سنة</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- No Players Message -->
+        <div id="noPlayers" class="text-center py-16" style="display: {% if players|length == 0 %}block{% else %}none{% endif %};">
+            <i class="fas fa-users text-6xl text-gray-500 mb-4"></i>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">لا توجد لاعبين حالياً</h3>
+            <p class="text-gray-500">قم بإضافة لاعبين من لوحة التحكم</p>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="modal" id="adminLoginModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-blue-400">
+                    <i class="fas fa-lock"></i> تسجيل دخول المدير
+                </h3>
+                <button onclick="closeModal('adminLoginModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-bold mb-2">كلمة المرور:</label>
+                <input type="password" id="adminPassword" 
+                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="أدخل كلمة المرور">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="checkAdminPassword()" 
+                        class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    دخول
+                </button>
+                <button onclick="closeModal('adminLoginModal')" 
+                        class="flex-1 px-6 py-3 glass-effect rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div class="modal" id="adminPanelModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-lg w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-blue-400">
+                    <i class="fas fa-cogs"></i> لوحة تحكم المدير
+                </h3>
+                <button onclick="closeModal('adminPanelModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid gap-4">
+                <button onclick="showAddPlayerForm()" 
+                        class="w-full px-6 py-4 bg-gradient-to-r from-green-500 to-green-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-plus"></i> إضافة لاعب جديد
+                </button>
+                <button onclick="showDeletePlayerForm()" 
+                        class="w-full px-6 py-4 bg-gradient-to-r from-red-500 to-red-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-trash"></i> حذف لاعب
+                </button>
+                <button onclick="exportData()" 
+                        class="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-download"></i> تصدير البيانات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Player Modal -->
+    <div class="modal" id="addPlayerModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-green-400">
+                    <i class="fas fa-plus"></i> إضافة لاعب جديد
+                </h3>
+                <button onclick="closeModal('addPlayerModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="addPlayerForm" enctype="multipart/form-data">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Player Info Section -->
+                    <div>
+                        <h4 class="text-lg font-bold mb-4 text-blue-400">
+                            <i class="fas fa-user"></i> معلومات اللاعب
+                        </h4>
+                        
+                        <!-- Player Image Upload -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">صورة اللاعب:</label>
+                            <div class="drag-drop-area" onclick="document.getElementById('playerImageInput').click()">
+                                <input type="file" id="playerImageInput" name="image" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                                <div id="imagePreview" class="mb-3">
+                                    <i class="fas fa-camera text-4xl text-blue-400 mb-2"></i>
+                                    <p>اضغط لرفع صورة أو اسحب الصورة هنا</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">اسم اللاعب:</label>
+                                <input type="text" name="name" required
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="اسم اللاعب">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">التقييم العام:</label>
+                                <input type="number" name="rating" min="50" max="99" required
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="التقييم">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">المركز:</label>
+                                <select name="position" required
+                                        class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">اختر المركز</option>
+                                    <option value="CF">CF - مهاجم وسط</option>
+                                    <option value="LWF">LWF - جناح أيسر</option>
+                                    <option value="RWF">RWF - جناح أيمن</option>
+                                    <option value="SS">SS - صانع ألعاب</option>
+                                    <option value="AMF">AMF - وسط مهاجم</option>
+                                    <option value="CMF">CMF - وسط ملعب</option>
+                                    <option value="DMF">DMF - وسط دفاعي</option>
+                                    <option value="LB">LB - ظهير أيسر</option>
+                                    <option value="RB">RB - ظهير أيمن</option>
+                                    <option value="CB">CB - مدافع وسط</option>
+                                    <option value="GK">GK - حارس مرمى</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">الفريق:</label>
+                                <input type="text" name="team" required
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="اسم الفريق">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">الجنسية:</label>
+                                <input type="text" name="nationality" required
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="الجنسية">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">العمر:</label>
+                                <input type="number" name="age" min="16" max="45" required
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="العمر">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <div>
+                        <h4 class="text-lg font-bold mb-4 text-blue-400">
+                            <i class="fas fa-chart-bar"></i> إحصائيات اللاعب
+                        </h4>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">السرعة:</label>
+                                <input type="number" name="pace" min="1" max="99" value="50"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">التسديد:</label>
+                                <input type="number" name="shooting" min="1" max="99" value="50"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">التمرير:</label>
+                                <input type="number" name="passing" min="1" max="99" value="50"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">المراوغة:</label>
+                                <input type="number" name="dribbling" min="1" max="99" value="50"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">الدفاع:</label>
+                                <input type="number" name="defending" min="1" max="99" value="50"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold mb-2">البنية الجسدية:</label>
+                                <input type="number" name="physical" min="1" max="99" value="50"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- Playing Styles -->
+                        <div class="mt-6">
+                            <h4 class="text-lg font-bold mb-4 text-blue-400">
+                                <i class="fas fa-running"></i> أساليب اللعب
+                            </h4>
+                            
+                            <div class="space-y-3">
+                                <input type="text" name="style1" 
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="أسلوب اللعب الأول">
+                                <input type="text" name="style2"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="أسلوب اللعب الثاني">
+                                <input type="text" name="style3"
+                                       class="w-full px-4 py-3 rounded-lg glass-effect text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="أسلوب اللعب الثالث">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-4 mt-8">
+                    <button type="submit" 
+                            class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                        <i class="fas fa-save"></i> حفظ اللاعب
+                    </button>
+                    <button type="button" onclick="closeModal('addPlayerModal')" 
+                            class="flex-1 px-6 py-3 glass-effect rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Player Modal -->
+    <div class="modal" id="deletePlayerModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-lg w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-red-400">
+                    <i class="fas fa-trash"></i> حذف لاعب
+                </h3>
+                <button onclick="closeModal('deletePlayerModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-bold mb-2">اختر اللاعب المراد حذفه:</label>
+                <select id="deletePlayerSelect" 
+                        class="w-full px-4 py-3 rounded-lg glass-effect text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">اختر لاعب...</option>
+                    {% for player in players %}
+                    <option value="{{ player.id }}">{{ player.name }} - {{ player.team }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="deletePlayer()" 
+                        class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-700 rounded-lg font-bold hover:shadow-lg transition-all duration-300">
+                    حذف
+                </button>
+                <button onclick="closeModal('deletePlayerModal')" 
+                        class="flex-1 px-6 py-3 glass-effect rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Details Modal -->
+    <div class="modal" id="playerDetailsModal">
+        <div class="glass-effect rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-blue-400">
+                    <i class="fas fa-user"></i> تفاصيل اللاعب
+                </h3>
+                <button onclick="closeModal('playerDetailsModal')" class="text-red-400 hover:text-red-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="playerDetailsContent">
+                <!-- Player details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Socket.IO and custom JavaScript -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
