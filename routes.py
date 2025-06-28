@@ -72,12 +72,16 @@ def add_player():
         
         # Extract stats
         stats = {
-            'pace': int(request.form.get('pace', 50)),
             'shooting': int(request.form.get('shooting', 50)),
             'passing': int(request.form.get('passing', 50)),
             'dribbling': int(request.form.get('dribbling', 50)),
+            'dexterity': int(request.form.get('dexterity', 50)),
+            'lower_body_strength': int(request.form.get('lower_body_strength', 50)),
+            'aerial_strength': int(request.form.get('aerial_strength', 50)),
             'defending': int(request.form.get('defending', 50)),
-            'physical': int(request.form.get('physical', 50))
+            'gk_1': int(request.form.get('gk_1', 50)),
+            'gk_2': int(request.form.get('gk_2', 50)),
+            'gk_3': int(request.form.get('gk_3', 50))
         }
         
         # Extract playing styles

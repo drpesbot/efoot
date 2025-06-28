@@ -422,28 +422,44 @@ function showPlayerDetails(playerId) {
                 </h3>
                 <div class="space-y-3">
                     <div class="flex justify-between">
-                        <span>السرعة:</span>
-                        <span class="font-bold">${stats.pace || 50}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>التسديد:</span>
+                        <span><i class="fas fa-bullseye text-blue-400"></i> التسديد:</span>
                         <span class="font-bold">${stats.shooting || 50}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span>التمرير:</span>
+                        <span><i class="fas fa-futbol text-blue-400"></i> التمرير:</span>
                         <span class="font-bold">${stats.passing || 50}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span>المراوغة:</span>
+                        <span><i class="fas fa-magic text-blue-400"></i> المراوغة:</span>
                         <span class="font-bold">${stats.dribbling || 50}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span>الدفاع:</span>
+                        <span><i class="fas fa-hand-paper text-blue-400"></i> البراعة:</span>
+                        <span class="font-bold">${stats.dexterity || 50}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span><i class="fas fa-dumbbell text-blue-400"></i> قوة الجسم السفلي:</span>
+                        <span class="font-bold">${stats.lower_body_strength || 50}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span><i class="fas fa-arrow-up text-blue-400"></i> القوة الهوائية:</span>
+                        <span class="font-bold">${stats.aerial_strength || 50}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span><i class="fas fa-shield-alt text-blue-400"></i> الدفاع:</span>
                         <span class="font-bold">${stats.defending || 50}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span>البنية الجسدية:</span>
-                        <span class="font-bold">${stats.physical || 50}</span>
+                        <span><i class="fas fa-hand-rock text-blue-400"></i> حراسة المرمى 1:</span>
+                        <span class="font-bold">${stats.gk_1 || 50}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span><i class="fas fa-hand-rock text-blue-400"></i> حراسة المرمى 2:</span>
+                        <span class="font-bold">${stats.gk_2 || 50}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span><i class="fas fa-hand-rock text-blue-400"></i> حراسة المرمى 3:</span>
+                        <span class="font-bold">${stats.gk_3 || 50}</span>
                     </div>
                 </div>
             </div>

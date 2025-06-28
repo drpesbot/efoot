@@ -109,7 +109,9 @@ This is a Flask-based web application for managing eFootball Mobile 2025 players
 
 ## Changelog
 
-- June 28, 2025. Initial setup
+- June 28, 2025: Initial setup
+- June 28, 2025: Updated player statistics to match eFootball Mobile format with 10 detailed stats (Shooting, Passing, Dribbling, Dexterity, Lower Body Strength, Aerial Strength, Defending, GK 1, GK 2, GK 3)
+- June 28, 2025: Changed admin password to user-specified value
 
 ## User Preferences
 
