@@ -8,7 +8,7 @@ from app import app, db, socketio
 from models import Player
 
 # Admin password - in production, this should be hashed and stored securely
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "0113023404")
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
