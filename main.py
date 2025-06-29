@@ -2,4 +2,5 @@ from app import app, socketio
 import os
 
 if __name__ == '__main__':
-    socketio.run(app, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    socketio.run(app, port=port, allow_unsafe_werkzeug=True)
